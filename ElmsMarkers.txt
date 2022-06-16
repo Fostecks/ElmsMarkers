@@ -6,7 +6,7 @@
 
 ## Title: ElmsMarkers
 ## Description: x
-## Author: Elm
+## Author: bitrock
 ## OptionalDependsOn: OdySupportIcons 
 ## Version: 1.0.0
 ## APIVersion: 101033 101034

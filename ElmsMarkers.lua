@@ -5,9 +5,6 @@ function ElmsMarkers.OnAddOnLoaded( eventCode, addonName )
 
 	ElmsMarkers.savedVars = ZO_SavedVars:NewCharacterIdSettings("ElmsMarkersSavedVariables", ElmsMarkers.variableVersion, nil, ElmsMarkers.defaults, nil, GetWorldName())
   SLASH_COMMANDS["/elms"] = ElmsMarkers.HandleCommandInput
-  SLASH_COMMANDS["/placeatme"] = ElmsMarkers.PlaceAtMe
-  SLASH_COMMANDS["/removeclose"] = ElmsMarkers.RemoveNearestMarker
-  
 
 	EVENT_MANAGER:RegisterForEvent(ElmsMarkers.name, EVENT_PLAYER_ACTIVATED, ElmsMarkers.CheckActivation)
 	EVENT_MANAGER:RegisterForEvent(ElmsMarkers.name, EVENT_ZONE_CHANGED, ElmsMarkers.CheckActivation)
@@ -15,24 +12,35 @@ function ElmsMarkers.OnAddOnLoaded( eventCode, addonName )
 end
 
 function ElmsMarkers.HandleCommandInput(args)
-	ElmsMarkers.savedVars.enabled = not ElmsMarkers.savedVars.enabled
-	CHAT_SYSTEM:AddMessage("[ElmsMarkers] " .. (ElmsMarkers.savedVars.enabled and "Enabled" or "Disabled"))
-  ElmsMarkers.CheckActivation()
+  args = args:gsub("%s+", "")
+  if not args or args == "" then
+    CHAT_SYSTEM:AddMessage("[ElmsMarkers] help")
+    CHAT_SYSTEM:AddMessage("/elms toggle (or t) - shows/hides markers")
+    CHAT_SYSTEM:AddMessage("/elms place (or p)  - place marker at your position")
+    CHAT_SYSTEM:AddMessage("/elms remove (or r) - remove nearest marker to your position")
+
+  elseif args == "toggle" or args == "t" then
+    ElmsMarkers.savedVars.enabled = not ElmsMarkers.savedVars.enabled
+    CHAT_SYSTEM:AddMessage("[ElmsMarkers] " .. (ElmsMarkers.savedVars.enabled and "Enabled" or "Disabled"))
+    ElmsMarkers.CheckActivation()
+  elseif args == "place" or args == "p" then
+    local location = ElmsMarkers.PlaceAtMe()
+    CHAT_SYSTEM:AddMessage("[ElmsMarkers] Placed new marker at " .. location[1] .. ", " .. location[2] .. ", " .. location[3])
+  elseif args == "remove" or args == "r" then
+    local location = ElmsMarkers.RemoveNearestMarker()
+    CHAT_SYSTEM:AddMessage("[ElmsMarkers] Removed marker at " .. location[1] .. ", " .. location[2] .. ", " .. location[3])
+  end
 end
 
 function ElmsMarkers.CheckActivation( eventCode )
 	local zoneId = GetZoneId(GetUnitZoneIndex("player"))
+  for zone, markers in pairs(ElmsMarkers.savedVars.positions) do
+    ElmsMarkers.RemovePositionIcons(zone)
+  end
   if (ElmsMarkers.savedVars.positions[zoneId] and ElmsMarkers.savedVars.enabled) then
     ElmsMarkers.PlacePositionIcons(ElmsMarkers.savedVars.positions[zoneId], zoneId)
-  elseif not ElmsMarkers.savedVars.enabled then
-    ElmsMarkers.RemovePositionIcons(zoneId)
   end
-
-  for zone, markers in pairs(ElmsMarkers.savedVars.positions) do
-    if zone ~= zoneId then
-      ElmsMarkers.RemovePositionIcons(zone)
-    end
-  end
+  ElmsMarkers.CreateConfigString()
 end
 
 function ElmsMarkers.PlacePositionIcons(positions, zoneId)
@@ -63,17 +71,18 @@ function ElmsMarkers.PlaceAtMe()
   if not OSI.CreatePositionIcon then return end
   local zone, wX, wY, wZ = GetUnitRawWorldPosition( "player" )
   local zonePositions = ElmsMarkers.savedVars.positions[zone]
-  local zonePositionIndex = ElmsMarkers.savedVars.positionIndeces[zone] or 0
   if not zonePositions then
     ElmsMarkers.savedVars.positions[zone] = { [1] = {wX, wY, wZ} }
   else
-    ElmsMarkers.savedVars.positions[zone][zonePositionIndex+1] = {wX, wY, wZ}
+    table.insert(ElmsMarkers.savedVars.positions[zone], {wX, wY, wZ})
   end
-  ElmsMarkers.savedVars.positionIndeces[zone] = zonePositionIndex + 1
   if not ElmsMarkers.placedIcons[zone] then
     ElmsMarkers.placedIcons[zone] = {}
   end
   table.insert(ElmsMarkers.placedIcons[zone], OSI.CreatePositionIcon( wX, wY, wZ, ElmsMarkers.iconTexture, OSI.GetIconSize()))
+  ElmsMarkers.CreateConfigString()
+
+  return {wX, wY, wZ}
 end
 
 function ElmsMarkers.RemoveNearestMarker() 
@@ -105,6 +114,9 @@ function ElmsMarkers.RemoveNearestMarker()
     end
     ElmsMarkers.savedVars.positions[zone][closestMarkerIndex] = nil
   end
+  ElmsMarkers.CreateConfigString()
+
+  return {closestMarker.x, closestMarker.y, closestMarker.z}
 end
 
 function ElmsMarkers.ClearZone()
@@ -117,9 +129,33 @@ function ElmsMarkers.ClearZone()
 
   ElmsMarkers.placedIcons[zone] = nil
   ElmsMarkers.savedVars.positions[zone] = nil
-
+  ElmsMarkers.CreateConfigString()
 end
 
+function ElmsMarkers.CreateConfigString()
+  local zone = GetUnitRawWorldPosition( "player" )
+  local configString = ""
+  local zonePositions = ElmsMarkers.savedVars.positions[zone]
+  if zonePositions then 
+    for k, v in pairs(zonePositions) do
+      configString = configString .. "/" .. zone .. "//" .. v[1] .. "," .. v[2] .. "," .. v[3] .. "/"
+    end
+  end
+  ElmsMarkers.savedVars.configStringExport = configString
+end
 
+function ElmsMarkers.ParseImportConfigString()
+  for zone, x, y, z in string.gmatch(ElmsMarkers.savedVars.configStringImport, "/(%d+)//(%d+),(%d+),(%d+)/") do
+    zone = tonumber(zone)
+    x = tonumber(x)
+    y = tonumber(y)
+    z = tonumber(z)
+    if not ElmsMarkers.savedVars.positions[zone] then
+      ElmsMarkers.savedVars.positions[zone] = {}
+    end
+    table.insert(ElmsMarkers.savedVars.positions[zone], {x, y, z})
+  end
+  ElmsMarkers.CheckActivation()
+end
 
 EVENT_MANAGER:RegisterForEvent(ElmsMarkers.name, EVENT_ADD_ON_LOADED, ElmsMarkers.OnAddOnLoaded)
