@@ -28,7 +28,9 @@ function ElmsMarkers.HandleCommandInput(args)
     CHAT_SYSTEM:AddMessage("[ElmsMarkers] Placed new marker at " .. location[1] .. ", " .. location[2] .. ", " .. location[3])
   elseif args == "remove" or args == "r" then
     local location = ElmsMarkers.RemoveNearestMarker()
-    CHAT_SYSTEM:AddMessage("[ElmsMarkers] Removed marker at " .. location[1] .. ", " .. location[2] .. ", " .. location[3])
+    if(location) then
+      CHAT_SYSTEM:AddMessage("[ElmsMarkers] Removed marker at " .. location[1] .. ", " .. location[2] .. ", " .. location[3])
+    end
   end
 end
 
@@ -59,7 +61,7 @@ end
 function ElmsMarkers.RemovePositionIcons(zoneId)
   if ElmsMarkers.placedIcons[zoneId] then 
     for k, v in pairs(ElmsMarkers.placedIcons[zoneId]) do
-      if OSI.DiscardPositionIcon then
+      if OSI and OSI.DiscardPositionIcon then
         OSI.DiscardPositionIcon(v)
       end
     end
@@ -68,7 +70,7 @@ function ElmsMarkers.RemovePositionIcons(zoneId)
 end
 
 function ElmsMarkers.PlaceAtMe()
-  if not OSI.CreatePositionIcon then return end
+  if not OSI or not OSI.CreatePositionIcon then return end
   local zone, wX, wY, wZ = GetUnitRawWorldPosition( "player" )
   local zonePositions = ElmsMarkers.savedVars.positions[zone]
   if not zonePositions then
@@ -86,10 +88,10 @@ function ElmsMarkers.PlaceAtMe()
 end
 
 function ElmsMarkers.RemoveNearestMarker() 
-  if not OSI.DiscardPositionIcon then return end
+  if not OSI or not OSI.DiscardPositionIcon then return end
   local zone, wX, wY, wZ = GetUnitRawWorldPosition( "player" )
   local zonePositions = ElmsMarkers.placedIcons[zone]
-
+  if(not zonePositions) then return end
   local closestMarker
   local closestMarkerIndex
   local shortestDistance = 9999
@@ -113,14 +115,14 @@ function ElmsMarkers.RemoveNearestMarker()
       end
     end
     ElmsMarkers.savedVars.positions[zone][closestMarkerIndex] = nil
+    return {closestMarker.x, closestMarker.y, closestMarker.z}
   end
   ElmsMarkers.CreateConfigString()
 
-  return {closestMarker.x, closestMarker.y, closestMarker.z}
 end
 
 function ElmsMarkers.ClearZone()
-  if not OSI.DiscardPositionIcon then return end
+  if not OSI or not OSI.DiscardPositionIcon then return end
   local zone = GetUnitRawWorldPosition( "player" )
 
   for k, v in pairs(ElmsMarkers.placedIcons[zone]) do
