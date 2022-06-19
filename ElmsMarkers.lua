@@ -52,7 +52,7 @@ function ElmsMarkers.PlacePositionIcons(positions, zoneId)
   if OSI and OSI.CreatePositionIcon then
     for i, iconLocation in pairs(positions) do
       if iconLocation then
-        table.insert(ElmsMarkers.placedIcons[zoneId], OSI.CreatePositionIcon( iconLocation[1], iconLocation[2], iconLocation[3], ElmsMarkers.iconTexture, OSI.GetIconSize()))
+        ElmsMarkers.DoPlaceIcon(zoneId, iconLocation[1], iconLocation[2], iconLocation[3], ElmsMarkers.iconData[iconLocation[4]])
       end
     end
   end
@@ -74,14 +74,14 @@ function ElmsMarkers.PlaceAtMe()
   local zone, wX, wY, wZ = GetUnitRawWorldPosition( "player" )
   local zonePositions = ElmsMarkers.savedVars.positions[zone]
   if not zonePositions then
-    ElmsMarkers.savedVars.positions[zone] = { [1] = {wX, wY, wZ} }
+    ElmsMarkers.savedVars.positions[zone] = { [1] = {wX, wY, wZ, ElmsMarkers.savedVars.selectedIconTexture} }
   else
-    table.insert(ElmsMarkers.savedVars.positions[zone], {wX, wY, wZ})
+    table.insert(ElmsMarkers.savedVars.positions[zone], {wX, wY, wZ, ElmsMarkers.savedVars.selectedIconTexture})
   end
   if not ElmsMarkers.placedIcons[zone] then
     ElmsMarkers.placedIcons[zone] = {}
   end
-  table.insert(ElmsMarkers.placedIcons[zone], OSI.CreatePositionIcon( wX, wY, wZ, ElmsMarkers.iconTexture, OSI.GetIconSize()))
+  ElmsMarkers.DoPlaceIcon(zone, wX, wY, wZ, ElmsMarkers.iconData[ElmsMarkers.savedVars.selectedIconTexture])
   ElmsMarkers.CreateConfigString()
 
   return {wX, wY, wZ}
@@ -134,28 +134,34 @@ function ElmsMarkers.ClearZone()
   ElmsMarkers.CreateConfigString()
 end
 
+function ElmsMarkers.DoPlaceIcon(zone, x, y, z, texture)
+  local iconSize = ElmsMarkers.savedVars.selectedIconSize / 64.0
+  table.insert(ElmsMarkers.placedIcons[zone], OSI.CreatePositionIcon( x, y, z, texture, iconSize * OSI.GetIconSize()))
+end
+
 function ElmsMarkers.CreateConfigString()
   local zone = GetUnitRawWorldPosition( "player" )
   local configString = ""
   local zonePositions = ElmsMarkers.savedVars.positions[zone]
   if zonePositions then 
     for k, v in pairs(zonePositions) do
-      configString = configString .. "/" .. zone .. "//" .. v[1] .. "," .. v[2] .. "," .. v[3] .. "/"
+      configString = configString .. "/" .. zone .. "//" .. v[1] .. "," .. v[2] .. "," .. v[3] .. "," .. v[4] .. "/"
     end
   end
   ElmsMarkers.savedVars.configStringExport = configString
 end
 
 function ElmsMarkers.ParseImportConfigString()
-  for zone, x, y, z in string.gmatch(ElmsMarkers.savedVars.configStringImport, "/(%d+)//(%d+),(%d+),(%d+)/") do
+  for zone, x, y, z, iconKey in string.gmatch(ElmsMarkers.savedVars.configStringImport, "/(%d+)//(%d+),(%d+),(%d+),(%d+)/") do
     zone = tonumber(zone)
     x = tonumber(x)
     y = tonumber(y)
     z = tonumber(z)
+    iconKey = tonumber(iconKey)
     if not ElmsMarkers.savedVars.positions[zone] then
       ElmsMarkers.savedVars.positions[zone] = {}
     end
-    table.insert(ElmsMarkers.savedVars.positions[zone], {x, y, z})
+    table.insert(ElmsMarkers.savedVars.positions[zone], {x, y, z, iconKey})
   end
   ElmsMarkers.CheckActivation()
 end

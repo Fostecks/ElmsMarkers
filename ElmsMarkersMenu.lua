@@ -60,6 +60,34 @@ function ElmsMarkers.buildMenu()
 				ElmsMarkers.ClearZone()
 			end,
 		},
+		{
+			type = "dropdown",
+			name = "Icon",
+			tooltip = "Icon to use for the next marker placements",
+			choices = ElmsMarkers.options,
+			sort = "name-up",
+			scrollable = true,
+			getFunc = function() 
+				return ElmsMarkers.reverseOptionMap[ElmsMarkers.savedVars.selectedIconTexture]
+			end,
+			setFunc = function(value)
+				ElmsMarkers.savedVars.selectedIconTexture = ElmsMarkers.optionMap[value]
+			end,
+		},
+		{
+			type = "slider",
+			name = "Icon size",
+			min = 12,
+			max = 192,
+			default = ElmsMarkers.defaults.selectedIconSize,
+			getFunc = function() 
+				return ElmsMarkers.savedVars.selectedIconSize
+			end,
+			setFunc = function(value)
+				ElmsMarkers.savedVars.selectedIconSize = value
+				ElmsMarkers.CheckActivation()
+			end,
+		}
 	}
 
 	LibAddonMenu2:RegisterAddonPanel(ElmsMarkers.name.."Options", panelData)
