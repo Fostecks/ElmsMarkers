@@ -30,28 +30,6 @@ function ElmsMarkers.buildMenu()
 			end,
 		},
 		{
-			type = "editbox",
-			name = "Config",
-			tooltip = "String that describes the icons you have configured to this zone",
-			default = ElmsMarkers.defaults.configStringExport,
-			isMultiline = true,
-			isExtraWide = true,
-			getFunc = function() 
-				return ElmsMarkers.savedVars.configStringExport
-			end,
-			setFunc = function(value)
-				ElmsMarkers.savedVars.configStringImport = value
-			end,
-		},
-		{
-			type = "button",
-			name = "Import",
-			tooltip = "Import a config string for this zone",
-			func = function(value)
-				ElmsMarkers.ParseImportConfigString()
-			end,
-		},
-		{
 			type = "button",
 			name = "Clear Zone",
 			tooltip = "This will clear all markers from this zone",
@@ -87,7 +65,33 @@ function ElmsMarkers.buildMenu()
 				ElmsMarkers.savedVars.selectedIconSize = value
 				ElmsMarkers.CheckActivation()
 			end,
-		}
+		},
+		{
+			type = "header",
+			name = " Import/Export",
+		},
+		{
+			type = "editbox",
+			name = "Config",
+			tooltip = "String that describes the icons you have configured to this zone",
+			default = ElmsMarkers.defaults.configStringExport,
+			isMultiline = true,
+			isExtraWide = true,
+			getFunc = function() 
+				return ElmsMarkers.savedVars.configStringExport
+			end,
+			setFunc = function(value)
+				ElmsMarkers.savedVars.configStringImport = value
+			end,
+		},
+		{
+			type = "button",
+			name = "Import",
+			tooltip = "Import a config string for this zone",
+			func = function(value)
+				ElmsMarkers.ParseImportConfigString()
+			end,
+		},
 	}
 
 	LibAddonMenu2:RegisterAddonPanel(ElmsMarkers.name.."Options", panelData)
