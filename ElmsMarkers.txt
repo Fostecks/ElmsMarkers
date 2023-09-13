@@ -7,8 +7,8 @@
 ## Title: ElmsMarkers
 ## Description: Create, manage, and share markers on your 3D world map.
 ## Author: bitrock
-## Version: 1.1.0
-## APIVersion: 101033 101034
+## Version: 1.2.0
+## APIVersion: 101039 101040
 ## SavedVariables: ElmsMarkersSavedVariables
 ## DependsOn: LibAddonMenu-2.0 OdySupportIcons
 

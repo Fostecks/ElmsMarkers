@@ -43,7 +43,6 @@ function ElmsMarkers.buildMenu()
 			name = "Icon",
 			tooltip = "Icon to use for the next marker placements",
 			choices = ElmsMarkers.options,
-			sort = "name-up",
 			scrollable = true,
 			getFunc = function() 
 				return ElmsMarkers.reverseOptionMap[ElmsMarkers.savedVars.selectedIconTexture]
