@@ -9,15 +9,13 @@ function ElmsMarkers.OnAddOnLoaded( eventCode, addonName )
 	EVENT_MANAGER:RegisterForEvent(ElmsMarkers.name, EVENT_PLAYER_ACTIVATED, ElmsMarkers.CheckActivation)
 	EVENT_MANAGER:RegisterForEvent(ElmsMarkers.name, EVENT_ZONE_CHANGED, ElmsMarkers.CheckActivation)
   ElmsMarkers.buildMenu()
+  ElmsMarkers.setupUI()
 end
 
 function ElmsMarkers.HandleCommandInput(args)
   args = args:gsub("%s+", "")
   if not args or args == "" then
-    CHAT_SYSTEM:AddMessage("[ElmsMarkers] help")
-    CHAT_SYSTEM:AddMessage("/elms toggle (or t) - shows/hides markers")
-    CHAT_SYSTEM:AddMessage("/elms place (or p)  - place marker at your position")
-    CHAT_SYSTEM:AddMessage("/elms remove (or r) - remove nearest marker to your position")
+    ElmsMarkers.UI.frame:SetHidden(false)
 
   elseif args == "toggle" or args == "t" then
     ElmsMarkers.savedVars.enabled = not ElmsMarkers.savedVars.enabled

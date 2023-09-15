@@ -15,5 +15,6 @@
 ElmsMarkersData.lua
 ElmsMarkers.lua
 ElmsMarkersMenu.lua
-
+ElmsMarkersUI.xml
+ElmsMarkersUI.lua
 
