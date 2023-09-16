@@ -32,5 +32,5 @@ function ElmsMarkers.setupUI()
   ui.markerDropdown:SetSelectedItemText(ElmsMarkers.reverseOptionMap[ElmsMarkers.savedVars.selectedIconTexture])
 
   ui.placeButton:SetHandler("OnMouseUp", ElmsMarkers.PlaceAtMe, "ElmsMarkers")  
-  ui.removeButton:SetHandler("OnMouseUp", ElmsMarkers.RemoveNearestMarker, "ElmsMarkers")
+  ui.removeButton:SetHandler("OnMouseUp", ElmsMarkers.RemoveNearMe, "ElmsMarkers")
 end
