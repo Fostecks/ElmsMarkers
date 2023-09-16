@@ -66,6 +66,19 @@ function ElmsMarkers.buildMenu()
 			end,
 		},
 		{
+			type = "checkbox",
+			name = "Subscribe to Group Lead",
+			tooltip = "Automatically updates your zone's markers with the group lead's added/removed markers",
+			default = ElmsMarkers.defaults.subscribeToLead,
+			getFunc = function() 
+				return ElmsMarkers.savedVars.subscribeToLead
+			end,
+			setFunc = function(value)
+				ElmsMarkers.savedVars.subscribeToLead = value
+				ElmsMarkers.CheckActivation()
+			end,
+		},
+		{
 			type = "header",
 			name = " Import",
 		},

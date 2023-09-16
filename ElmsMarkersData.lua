@@ -1,6 +1,6 @@
 ElmsMarkers = {
     name = "ElmsMarkers",
-    version = "1.2.0",
+    version = "3.0.0",
     variableVersion = 7,
     defaults = {
         enabled = true,
@@ -8,9 +8,12 @@ ElmsMarkers = {
         configStringExport = "",
         configStringImport = "",
         selectedIconTexture = 13,
-        selectedIconSize = 64
+        selectedIconSize = 64,
+        subscribeToLead = false,
     },
-    placedIcons = {}
+    placedIcons = {},
+    dataShareTuple = { },
+    PING_RATE = 2000,
   }
 
   ElmsMarkers.iconData = {

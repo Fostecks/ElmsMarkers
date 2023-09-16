@@ -8,8 +8,36 @@ function ElmsMarkers.OnAddOnLoaded( eventCode, addonName )
 
 	EVENT_MANAGER:RegisterForEvent(ElmsMarkers.name, EVENT_PLAYER_ACTIVATED, ElmsMarkers.CheckActivation)
 	EVENT_MANAGER:RegisterForEvent(ElmsMarkers.name, EVENT_ZONE_CHANGED, ElmsMarkers.CheckActivation)
+	EVENT_MANAGER:RegisterForUpdate(ElmsMarkers.name .. 'cycle', 100, ElmsMarkers.Cycle)
   ElmsMarkers.buildMenu()
   ElmsMarkers.setupUI()
+
+  ElmsMarkers.shareMapData = LibDataShare:RegisterMap("ElmsMarkers", 2, ElmsMarkers.HandleData)
+end
+
+ function ElmsMarkers.HandleData(tag, data)
+	if tag and data then
+    if(tag == GetGroupLeaderUnitTag() and ElmsMarkers.savedVars.subscribeToLead) then
+      local dataIdentifier = data % 10
+      if dataIdentifier == 1 then
+        local wX = data / 100000
+        local iconId = data % 100000 / 10
+
+      elseif dataIdentifier == 2 then
+        local wZ = data / 100000
+        local zone = data % 100000 / 10
+
+      elseif dataIdentifier == 9 then
+        local wY = data / 1000
+        local isAdd = data % 1000 / 100
+      end
+    end
+  end
+end
+
+function ElmsMarkers.Cycle()
+  if LibDataShare:IsSendWindow() then
+  end
 end
 
 function ElmsMarkers.HandleCommandInput(args)
@@ -21,13 +49,18 @@ function ElmsMarkers.HandleCommandInput(args)
     ElmsMarkers.savedVars.enabled = not ElmsMarkers.savedVars.enabled
     CHAT_SYSTEM:AddMessage("[ElmsMarkers] " .. (ElmsMarkers.savedVars.enabled and "Enabled" or "Disabled"))
     ElmsMarkers.CheckActivation()
+  elseif args == "publish" or args == "pp" then
+    local location = ElmsMarkers.PlaceAndPublish()
+    if(location) then
+      CHAT_SYSTEM:AddMessage("[ElmsMarkers] Published new marker at " .. location[2] .. ", " .. location[3] .. ", " .. location[4])      
+    end
   elseif args == "place" or args == "p" then
     local location = ElmsMarkers.PlaceAtMe()
-    CHAT_SYSTEM:AddMessage("[ElmsMarkers] Placed new marker at " .. location[1] .. ", " .. location[2] .. ", " .. location[3])
+    CHAT_SYSTEM:AddMessage("[ElmsMarkers] Placed new marker at " .. location[2] .. ", " .. location[3] .. ", " .. location[4])
   elseif args == "remove" or args == "r" then
     local location = ElmsMarkers.RemoveNearestMarker()
     if(location) then
-      CHAT_SYSTEM:AddMessage("[ElmsMarkers] Removed marker at " .. location[1] .. ", " .. location[2] .. ", " .. location[3])
+      CHAT_SYSTEM:AddMessage("[ElmsMarkers] Removed marker at " .. location[2] .. ", " .. location[3] .. ", " .. location[4])
     end
   end
 end
@@ -67,9 +100,14 @@ function ElmsMarkers.RemovePositionIcons(zoneId)
   ElmsMarkers.placedIcons[zoneId] = nil
 end
 
-function ElmsMarkers.PlaceAtMe()
-  if not OSI or not OSI.CreatePositionIcon then return end
+function ElmsMarkers.PlaceAtMe() 
   local zone, wX, wY, wZ = GetUnitRawWorldPosition( "player" )
+  return ElmsMarkers.PlaceAtLocation({zone, wX, wY, wZ})
+end
+
+function ElmsMarkers.PlaceAtLocation(location)
+  if not OSI or not OSI.CreatePositionIcon then return end
+  local zone, wX, wY, wZ = unpack(location)
   local zonePositions = ElmsMarkers.savedVars.positions[zone]
   if not zonePositions then
     ElmsMarkers.savedVars.positions[zone] = { [1] = {wX, wY, wZ, ElmsMarkers.savedVars.selectedIconTexture} }
@@ -82,7 +120,53 @@ function ElmsMarkers.PlaceAtMe()
   ElmsMarkers.DoPlaceIcon(zone, wX, wY, wZ, ElmsMarkers.iconData[ElmsMarkers.savedVars.selectedIconTexture])
   ElmsMarkers.CreateConfigString()
 
-  return {wX, wY, wZ}
+  return {zone, wX, wY, wZ, ElmsMarkers.savedVars.selectedIconTexture}
+end
+
+function ElmsMarkers.PlaceAndPublish() 
+  local timeNow = GetGameTimeMilliseconds()
+  if(ElmsMarkers.lastPingTime == nil or (timeNow - ElmsMarkers.lastPingTime > ElmsMarkers.PING_RATE)) then
+    if AreUnitsEqual(GetGroupLeaderUnitTag(), 'player') then
+      local location = ElmsMarkers.PlaceAtMe()
+      ElmsMarkers.EncodeEnqueuePublish(location, true)
+      return location
+    else
+      CHAT_SYSTEM:AddMessage("[ElmsMarkers] You must be the group lead to publish markers!")
+    end
+  else 
+    CHAT_SYSTEM:AddMessage("[ElmsMarkers] You're publishing too quickly! Publish not sent, try again later.")
+  end
+end
+
+function ElmsMarkers.EncodeEnqueuePublish(location, isAdd)
+  local zone, wX, wY, wZ, iconId = unpack(location)
+  -- ping 1: wX iconId
+  -- ping 2: wZ zone
+  -- ping 3: wY isAdd/isRemove endSignature
+
+  local addBit = isAdd and 1 or 0
+  local endSignature = 99
+
+  local dataPacket1 = wX * 100000 + iconId * 10 + 1
+  local dataPacket2 = wZ * 100000 + zone * 10 + 2
+  local dataPacket3 = wY * 1000 + addBit * 100 + endSignature
+
+  local wX = math.floor(dataPacket1 / 100000)
+  local iconId = math.floor(dataPacket1 % 100000 / 10)
+
+  local wZ = math.floor(dataPacket2 / 100000)
+  local zone = math.floor(dataPacket2 % 100000 / 10)
+
+  local wY = math.floor(dataPacket3 / 1000)
+  local isAdd = math.floor(dataPacket3 % 1000 / 100)
+  
+  d(wX, wY, wZ, zone, iconId, isAdd)
+  
+  zo_callLater(ElmsMarkers.shareMapData:SendData(dataPacket1), 100)
+  zo_callLater(ElmsMarkers.shareMapData:SendData(dataPacket2), 200)
+  zo_callLater(ElmsMarkers.shareMapData:SendData(dataPacket3), 300)
+
+  ElmsMarkers.lastPingTime = GetGameTimeMilliseconds()
 end
 
 function ElmsMarkers.RemoveNearestMarker() 
@@ -113,7 +197,7 @@ function ElmsMarkers.RemoveNearestMarker()
       end
     end
     ElmsMarkers.savedVars.positions[zone][closestMarkerIndex] = nil
-    return {closestMarker.x, closestMarker.y, closestMarker.z}
+    return {zone, closestMarker.x, closestMarker.y, closestMarker.z, ElmsMarkers.savedVars.selectedIconTexture}
   end
   ElmsMarkers.CreateConfigString()
 
