@@ -10,8 +10,11 @@ ElmsMarkers = {
         selectedIconTexture = 13,
         selectedIconSize = 64,
         subscribeToLead = false,
+        frameOffsetX = 600,
+        frameOffsetY = 700,
     },
     placedIcons = {},
+    dataQueue = {},
     dataShareTuple = { },
     PING_RATE = 2000,
   }

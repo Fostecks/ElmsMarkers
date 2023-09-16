@@ -8,7 +8,8 @@ function ElmsMarkers.setupUI()
   ui.subtitle = ElmsMarkers_Frame_Title_Subtitle
   ui.close = ElmsMarkers_Frame_Title_Close
   ui.placeButton = ElmsMarkers_Frame_Button_Group_Place_Button
-  ui.publishButton = ElmsMarkers_Frame_Button_Group_Publish_Button
+  ui.placePublishButton = ElmsMarkers_Frame_Button_Group_Place_Publish_Button
+  ui.removePublishButton = ElmsMarkers_Frame_Button_Group_Remove_Publish_Button
   ui.removeButton = ElmsMarkers_Frame_Button_Group_Remove_Button
   ui.markerIcon = ElmsMarkers_Frame_Marker_Dropdown_Panel_Marker_Icon
 
@@ -33,4 +34,18 @@ function ElmsMarkers.setupUI()
 
   ui.placeButton:SetHandler("OnMouseUp", ElmsMarkers.PlaceAtMe, "ElmsMarkers")  
   ui.removeButton:SetHandler("OnMouseUp", ElmsMarkers.RemoveNearMe, "ElmsMarkers")
+  ui.placePublishButton:SetHandler("OnMouseUp", function() ElmsMarkers.PreparePublish(true) end, "ElmsMarkers")
+  ui.removePublishButton:SetHandler("OnMouseUp", function() ElmsMarkers.PreparePublish(false) end, "ElmsMarkers")
+  ElmsMarkers.CheckGroupLead()
+end
+
+function ElmsMarkers.saveFramePosition()
+  ElmsMarkers.savedVars.frameOffsetX = ElmsMarkers.UI.frame:GetLeft()
+  ElmsMarkers.savedVars.frameOffsetY = ElmsMarkers.UI.frame:GetTop()
+end
+
+function ElmsMarkers.setFramePosition()
+	local x, y = ElmsMarkers.savedVars.frameOffsetX, ElmsMarkers.savedVars.frameOffsetY
+	ElmsMarkers.UI.frame:ClearAnchors()
+	ElmsMarkers.UI.frame:SetAnchor(TOPLEFT, GuiRoot, TOPLEFT, x, y)
 end

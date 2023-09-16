@@ -8,40 +8,53 @@ function ElmsMarkers.OnAddOnLoaded( eventCode, addonName )
 
 	EVENT_MANAGER:RegisterForEvent(ElmsMarkers.name, EVENT_PLAYER_ACTIVATED, ElmsMarkers.CheckActivation)
 	EVENT_MANAGER:RegisterForEvent(ElmsMarkers.name, EVENT_ZONE_CHANGED, ElmsMarkers.CheckActivation)
+	EVENT_MANAGER:RegisterForEvent(ElmsMarkers.name, EVENT_LEADER_UPDATE, ElmsMarkers.CheckGroupLead)
   ElmsMarkers.buildMenu()
   ElmsMarkers.setupUI()
+  ElmsMarkers.setFramePosition()
 
   ElmsMarkers.shareMapData = LibDataShare:RegisterMap("ElmsMarkers", 2, ElmsMarkers.HandleDataShareReceived)
+end
+
+function ElmsMarkers.CheckGroupLead(eventCode, leaderTag)
+  if AreUnitsEqual(GetGroupLeaderUnitTag(), 'player') then
+    ElmsMarkers.UI.placePublishButton:SetHidden(false)
+    ElmsMarkers.UI.removePublishButton:SetHidden(false)
+  else
+    ElmsMarkers.UI.placePublishButton:SetHidden(true)
+    ElmsMarkers.UI.removePublishButton:SetHidden(true)
+  end
 end
 
  function ElmsMarkers.HandleDataShareReceived(tag, data)
 	if tag and data then
     if(tag == GetGroupLeaderUnitTag() and ElmsMarkers.savedVars.subscribeToLead) then
-      tuple = ElmsMarkers.dataShareTuple
+      local tuple = ElmsMarkers.dataShareTuple
       local dataIdentifier = data % 10
       if dataIdentifier == 1 then
-        local wX = data / 100000
-        local iconId = data % 100000 / 10
+        local wX = math.floor(data / 100000)
+        local iconId = math.floor(data % 100000 / 10)
         tuple.wX = wX
         tuple.iconId = iconId
       elseif dataIdentifier == 2 then
-        local wZ = data / 100000
-        local zone = data % 100000 / 10
+        local wZ = math.floor(data / 100000)
+        local zone = math.floor(data % 100000 / 10)
         tuple.wZ = wZ
         tuple.zone = zone
       elseif dataIdentifier == 3 then
-        local wY = data / 1000
-        local isAdd = data % 1000 / 100
+        local wY = math.floor(data / 1000)
+        local isAdd = math.floor(data % 1000 / 100)
         tuple.wY = wY
         tuple.isAdd = isAdd
       end
 
       if tuple.zone and tuple.wX and tuple.wY and tuple.wZ and tuple.iconId and tuple.isAdd then
-        if(isAdd == 2) then
+        if(tuple.isAdd == 2) then
           ElmsMarkers.PlaceAtLocation({tuple.zone, tuple.wX, tuple.wY, tuple.wZ, tuple.iconId})
         else
-          ElmsMarkers.RemoveMarkerAt({tuple.zone, tuple.wX, tuple.wY. tuple.wZ})
+          ElmsMarkers.RemoveMarkerAt({tuple.zone, tuple.wX, tuple.wY, tuple.wZ})
         end
+        ElmsMarkers.dataShareTuple = { }
       end
     end
   end
@@ -70,7 +83,7 @@ function ElmsMarkers.HandleCommandInput(args)
     local location = ElmsMarkers.PlaceAtMe()
     CHAT_SYSTEM:AddMessage("[ElmsMarkers] Placed new marker at " .. location[2] .. ", " .. location[3] .. ", " .. location[4])
   elseif args == "remove" or args == "r" then
-    local location = ElmsMarkers.RemoveNearestMarker()
+    local location = ElmsMarkers.RemoveNearMe()
     if(location) then
       CHAT_SYSTEM:AddMessage("[ElmsMarkers] Removed marker at " .. location[2] .. ", " .. location[3] .. ", " .. location[4])
     end
@@ -143,7 +156,7 @@ function ElmsMarkers.PreparePublish(isAdd)
       if isAdd then
         location = ElmsMarkers.PlaceAtMe()
       else
-        location = ElmsMarkers.RemoveNearestMarker()
+        location = ElmsMarkers.RemoveNearMe()
       end
 
       ElmsMarkers.EncodeEnqueuePublish(location, isAdd)
@@ -178,18 +191,23 @@ function ElmsMarkers.EncodeEnqueuePublish(location, isAdd)
   local wY = math.floor(dataPacket3 / 1000)
   local isAdd = math.floor(dataPacket3 % 1000 / 100)
   
-  d(wX, wY, wZ, zone, iconId, isAdd)
-  
-  zo_callLater(ElmsMarkers.shareMapData:SendData(dataPacket1), 100)
-  zo_callLater(ElmsMarkers.shareMapData:SendData(dataPacket2), 200)
-  zo_callLater(ElmsMarkers.shareMapData:SendData(dataPacket3), 300)
-
+  ElmsMarkers.dataQueue = {dataPacket1, dataPacket2, dataPacket3}
+  EVENT_MANAGER:RegisterForUpdate(ElmsMarkers.name .. 'Cycle', 100, ElmsMarkers.ShareData)
   ElmsMarkers.lastPingTime = GetGameTimeMilliseconds()
+end
+
+function ElmsMarkers.ShareData() 
+  dataPacket = table.remove(ElmsMarkers.dataQueue, 1)
+  if(dataPacket) then
+    ElmsMarkers.shareMapData:SendData(dataPacket)
+  else
+    EVENT_MANAGER:UnregisterForUpdate(ElmsMarkers.name..'Cycle')
+  end
 end
 
 function ElmsMarkers.RemoveNearMe()
   local zone, wX, wY, wZ = GetUnitRawWorldPosition("player")
-  ElmsMarkers.RemoveNearestMarker({zone, wX, wY, wZ})
+  return ElmsMarkers.RemoveNearestMarker({zone, wX, wY, wZ})
 end
 
 function ElmsMarkers.RemoveNearestMarker(location) 
@@ -234,12 +252,13 @@ function ElmsMarkers.RemoveMarkerAt(location)
 
   for k,v in pairs(ElmsMarkers.savedVars.positions[zone]) do
     if v[1] == wX and v[2] == wY and v[3] == wZ then
-      ElmsMarkers.savedVars.position[zone][k] = nil
+      ElmsMarkers.savedVars.positions[zone][k] = nil
+      ElmsMarkers.CreateConfigString()
     end
   end
 
   for k, v in pairs(ElmsMarkers.placedIcons[zone]) do
-    if v.x = wX and v.y - wY and v.z = wZ then
+    if v.x == wX and v.y == wY and v.z == wZ then
       OSI.DiscardPositionIcon(v)
       ElmsMarkers.placedIcons[zone][k] = nil
     end

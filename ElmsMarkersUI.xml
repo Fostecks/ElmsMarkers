@@ -4,6 +4,9 @@
 		<TopLevelControl name="ElmsMarkers_Frame" clampedToScreen="true" mouseEnabled="true" movable="true" hidden="true" >
 			<Anchor point="TOPLEFT" relativePoint="TOPLEFT" offsetX="600" offsetY="700" />
 			<Dimensions x="400" y="250" />
+			<OnMoveStop>
+				ElmsMarkers.saveFramePosition()
+			</OnMoveStop>
 			<Controls>
 				<Backdrop name="$(parent)BG" edgeColor="FF000000" centerColor="D0111111" >
 					<Edge edgeSize="1" />
@@ -44,13 +47,16 @@
 					<Anchor point="BOTTOMRIGHT" relativePoint="BOTTOMRIGHT" offsetX="-8" offsetY="-8" />
           <Controls>
             <Button name="$(parent)_Place_Button" text="Place" inherits="ZO_DefaultButton" >
-							<Anchor point="LEFT" relativePoint="LEFT" offsetX="-4" />
+							<Anchor point="LEFT" relativePoint="LEFT" offsetY="-26" offsetX="-4" />
             </Button>
-            <Button name="$(parent)_Publish_Button" text="Place + Publish" inherits="ZO_DefaultButton" hidden="true">
-							<Anchor point="CENTER" relativePoint="CENTER" />
+            <Button name="$(parent)_Place_Publish_Button" text="Place, Publish" inherits="ZO_DefaultButton">
+							<Anchor point="TOPLEFT" relativePoint="BOTTOMLEFT" relativeTo="$(parent)_Place_Button" offsetY="6"/>
             </Button>
             <Button name="$(parent)_Remove_Button" text="Remove" inherits="ZO_DefaultButton" >
-							<Anchor point="RIGHT" relativePoint="RIGHT" offsetX="4"/>
+							<Anchor point="RIGHT" relativePoint="RIGHT" offsetY="-26" offsetX="4"/>
+            </Button>
+						<Button name="$(parent)_Remove_Publish_Button" text="Remove, Publish" inherits="ZO_DefaultButton">
+							<Anchor point="TOPLEFT" relativePoint="BOTTOMLEFT" relativeTo="$(parent)_Remove_Button" offsetY="6"/>
             </Button>
           </Controls>
         </Control>
