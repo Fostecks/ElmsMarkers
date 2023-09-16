@@ -161,6 +161,7 @@ function ElmsMarkers.ParseImportConfigString()
     end
     table.insert(ElmsMarkers.savedVars.positions[zone], {x, y, z, iconKey})
   end
+  ElmsMarkers.savedVars.configStringImport = ""
   ElmsMarkers.CheckActivation()
 end
 

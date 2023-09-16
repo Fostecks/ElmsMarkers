@@ -67,7 +67,33 @@ function ElmsMarkers.buildMenu()
 		},
 		{
 			type = "header",
-			name = " Import/Export",
+			name = " Import",
+		},
+		{
+			type = "editbox",
+			name = "Config",
+			tooltip = "Insert a valid ElmsMarkers string to import new icons into your zone",
+			default = ElmsMarkers.defaults.configStringImport,
+			isMultiline = true,
+			isExtraWide = true,
+			getFunc = function() 
+				return ElmsMarkers.savedVars.configStringImport
+			end,
+			setFunc = function(value)
+				ElmsMarkers.savedVars.configStringImport = value
+			end,
+		},
+		{
+			type = "button",
+			name = "Import",
+			tooltip = "Import a config string for this zone",
+			func = function(value)
+				ElmsMarkers.ParseImportConfigString()
+			end,
+		},
+		{
+			type = "header",
+			name = " Export String",
 		},
 		{
 			type = "editbox",
@@ -80,15 +106,6 @@ function ElmsMarkers.buildMenu()
 				return ElmsMarkers.savedVars.configStringExport
 			end,
 			setFunc = function(value)
-				ElmsMarkers.savedVars.configStringImport = value
-			end,
-		},
-		{
-			type = "button",
-			name = "Import",
-			tooltip = "Import a config string for this zone",
-			func = function(value)
-				ElmsMarkers.ParseImportConfigString()
 			end,
 		},
 	}

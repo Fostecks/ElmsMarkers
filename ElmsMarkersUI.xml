@@ -33,6 +33,10 @@
               <Dimensions x="200" y="29" />
               <Anchor point="CENTER" relativePoint="CENTER" offsetY="-25" />
             </Control>
+            <Texture name="$(parent)_Marker_Icon">
+              <Anchor point="BOTTOM" relativeTo="$(parent)" relativePoint="BOTTOM" offsetY="0" />
+              <Dimensions x="80" y="80"/>
+            </Texture>
           </Controls>
         </Control>
         <Control name="$(parent)_Button_Group">
